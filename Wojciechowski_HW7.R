@@ -101,10 +101,13 @@ mod.improved <- lm(log.ch4 ~ airTemp+
                  log.DIP+
                  log.precip+ 
                   BorealV +
-                   TropicalV +
-                   HydroV, data=ghg)
+                  TropicalV , data=ghg)
 
 summary(mod.improved)
+
+table_out <- summary(mod.improved)$coefficients
+
+write.csv(table_out, "/cloud/project/mod.csv", row.names =TRUE)
 
 ##Assumptions Check for improved model
 
@@ -135,8 +138,7 @@ predict.lm(imp.step$model,
                       log.DIP    = log(51),
                       log.precip = log(1500),
                       BorealV    = 0,
-                      TropicalV  = 1,
-                      HydroV     = 1),
+                      TropicalV  = 1),
            interval = "prediction")
 
 ##start of chapter 7 tutorial 
@@ -226,4 +228,8 @@ ggplot() +
                   ymax=Hi.95), fill=rgb(0.5,0.5,0.5,0.5))+ # uncertainty interval
   theme_classic()+
   labs(x="year", y="Evapotranspiration (in)")
+
+
+
+##start of homework 
 
