@@ -233,3 +233,270 @@ ggplot() +
 
 ##start of homework 
 
+## Question 1
+
+##transformation for co2
+ghg$co2.transformation <- 1/ (ghg$co2 + 1000)
+
+## model implementation 
+model.co2 <- lm(co2.transformation ~ log.age + log.depth + BorealV +
+                  log.DIP + log.precip, ghg)
+summary(model.co2)
+
+##check assumptions 
+
+res.co2 <- rstandard(model.co2)
+fit.co2 <- fitted.values(model.co2)
+qqnorm(res.co2, pch = 19, col = "grey50", main = "Q-Q Plot: co2")
+qqline(res.co2)
+shapiro.test(res.co2)
+
+plot(fit.co2, res.co2, pch = 19, col = "grey50",
+     xlab = "Fitted Values", ylab = "Standardized Residuals",
+     main = "Residuals vs Fitted: co2")
+abline(h = 0)
+
+ols_vif_tol(model.co2)
+
+co2.step <- ols_step_forward_aic(model.co2)
+co2.step
+plot(co2.step)
+summary(co2.step$model)
+
+## print out table for summary 
+table_out <- summary(model.co2)$coefficients
+
+write.csv(table_out, "/cloud/project/model.csv", row.names =TRUE)
+
+nrow(model.co2$model)
+
+## Question 3.
+
+##decompose almonds
+
+# average fields for each month for almonds
+almond <- ETdat %>% # ET data
+  filter(crop == "Almonds") %>% # only use almond fields
+  group_by(date) %>% # calculate over each date
+  summarise(ET.in = mean(Ensemble.ET, na.rm=TRUE)) # average fields
+
+# visualize the data
+ggplot(almond, aes(x=ymd(date),y=ET.in))+
+  geom_point()+
+  geom_line()+
+  labs(x="year", y="Monthy evapotranspiration (in)")
+
+# almond ET time series
+almond_ts <- ts(almond$ET.in, # data
+                start = c(2016,1), #start year 2016, month 1
+                #first number is unit of time and second is observations within a unit
+                frequency= 12) # frequency of observations in a unit
+
+# decompose almond ET time series
+almond_dec <- decompose(almond_ts)
+# plot decomposition
+plot(almond_dec)
+
+## decompose pistachios
+
+
+pistachios <- ETdat %>% # ET data
+  filter(crop == "Pistachios") %>% 
+  group_by(date) %>% # calculate over each date
+  summarise(ET.in = mean(Ensemble.ET, na.rm=TRUE)) # average fields
+
+# visualize the data
+ggplot(pistachios, aes(x=ymd(date),y=ET.in))+
+  geom_point()+
+  geom_line()+
+  labs(x="year", y="Monthy evapotranspiration (in)")
+
+# ET time series
+pistachios_ts <- ts(pistachios$ET.in, # data
+                start = c(2016,1), #start year 2016, month 1
+                #first number is unit of time and second is observations within a unit
+                frequency= 12) # frequency of observations in a unit
+
+# decompose ET time series
+pistachios_dec <- decompose(pistachios_ts)
+# plot decomposition
+plot(pistachios_dec)
+
+##decompose fallow/idle fields
+
+
+fallow <- ETdat %>% # ET data
+  filter(crop == "Fallow/Idle Cropland") %>% 
+  group_by(date) %>% # calculate over each date
+  summarise(ET.in = mean(Ensemble.ET, na.rm=TRUE)) # average fields
+
+# visualize the data
+ggplot(fallow, aes(x=ymd(date),y=ET.in))+
+  geom_point()+
+  geom_line()+
+  labs(x="year", y="Monthy evapotranspiration (in)")
+
+# ET time series
+fallow_ts <- ts(fallow$ET.in, # data
+                    start = c(2016,1), #start year 2016, month 1
+                    #first number is unit of time and second is observations within a unit
+                    frequency= 12) # frequency of observations in a unit
+
+# decompose ET time series
+fallow_dec <- decompose(fallow_ts)
+# plot decomposition
+plot(fallow_dec)
+
+##decompose corn time series 
+
+corn <- ETdat %>% # ET data
+  filter(crop == "Corn") %>% 
+  group_by(date) %>% # calculate over each date
+  summarise(ET.in = mean(Ensemble.ET, na.rm=TRUE)) # average fields
+
+# visualize the data
+ggplot(corn, aes(x=ymd(date),y=ET.in))+
+  geom_point()+
+  geom_line()+
+  labs(x="year", y="Monthy evapotranspiration (in)")
+
+#  ET time series
+corn_ts <- ts(corn$ET.in, # data
+                start = c(2016,1), #start year 2016, month 1
+                #first number is unit of time and second is observations within a unit
+                frequency= 12) # frequency of observations in a unit
+
+# decompose ET time series
+corn_dec <- decompose(corn_ts)
+# plot decomposition
+plot(corn_dec)
+
+## decompose table grapes time series
+
+
+grapes <- ETdat %>% # ET data
+  filter(crop == "Grapes (Table/Raisin)") %>% 
+  group_by(date) %>% # calculate over each date
+  summarise(ET.in = mean(Ensemble.ET, na.rm=TRUE)) # average fields
+
+# visualize the data
+ggplot(grapes, aes(x=ymd(date),y=ET.in))+
+  geom_point()+
+  geom_line()+
+  labs(x="year", y="Monthy evapotranspiration (in)")
+
+#  ET time series
+grapes_ts <- ts(grapes$ET.in, # data
+              start = c(2016,1), #start year 2016, month 1
+              #first number is unit of time and second is observations within a unit
+              frequency= 12) # frequency of observations in a unit
+
+# decompose ET time series
+grapes_dec <- decompose(grapes_ts)
+# plot decomposition
+plot(grapes_dec)
+
+
+## Question 4 
+
+##pistachio ar model 
+
+pistachiosTrend <- pistachios_dec$trend
+pistachiosSeason <- pistachios_dec$seasonal
+
+acf(na.omit(pistachios_ts),
+    lag.max = 24)
+
+pacf.plot <- pacf(na.omit(pistachios_ts))
+
+pistachios_y <- na.omit(pistachios_ts)
+
+model1 <- arima(pistachios_y,
+                order = c(1,0,0))
+model1
+
+model4 <- arima(pistachios_y,
+                order = c(4,0,0))
+model4
+
+AR_fit1 <- pistachios_y - residuals(model1)
+AR_fit4 <- pistachios_y - residuals(model4)
+
+plot(pistachios_y)
+points(AR_fit1, type = "l", col = "tomato3",        lty = 2, lwd = 2)
+points(AR_fit4, type = "l", col = "darkgoldenrod4", lty = 2, lwd = 2)
+legend("topleft", c("data","AR1","AR4"),
+       lty = c(1,2,2), lwd = c(1,2,2),
+       col = c("black","tomato3","darkgoldenrod4"),
+       bty = "n")
+
+newPistachio <- forecast(model4)
+newPistachio
+
+newPistachioF <- data.frame(newPistachio)
+
+years <- c(rep(2021,4), rep(2022,12), rep(2023,8))
+month <- c(seq(9,12), seq(1,12), seq(1,8))
+newPistachioF$dateF <- ymd(paste(years,"/",month,"/",1))
+
+ggplot() +
+  geom_line(data = pistachios, aes(x = ymd(date), y = ET.in)) +
+  xlim(ymd(pistachios$date[1]), newPistachioF$dateF[24]) +
+  geom_line(data = newPistachioF, aes(x = dateF, y = Point.Forecast),
+            col = "red") +
+  geom_ribbon(data = newPistachioF,
+              aes(x = dateF, ymin = Lo.95, ymax = Hi.95),
+              fill = rgb(0.5,0.5,0.5,0.5)) +
+  theme_classic() +
+  labs(x = "year", y = "Evapotranspiration (in)", main = "Pistachois")
+
+## fallow ar model 
+
+fallowTrend <- fallow_dec$trend
+fallowSeason <- fallow_dec$seasonal
+
+acf(na.omit(fallow_ts),
+    lag.max = 24)
+
+pacf.plot <- pacf(na.omit(fallow_ts))
+
+fallow_y <- na.omit(fallow_ts)
+
+model1 <- arima(fallow_y,
+                order = c(1,0,0))
+model1
+
+model4 <- arima(fallow_y,
+                order = c(4,0,0))
+model4
+
+AR_fit1 <- fallow_y - residuals(model1)
+AR_fit4 <- fallow_y - residuals(model4)
+
+plot(fallow_y)
+points(AR_fit1, type = "l", col = "tomato3",        lty = 2, lwd = 2)
+points(AR_fit4, type = "l", col = "darkgoldenrod4", lty = 2, lwd = 2)
+legend("topleft", c("data","AR1","AR4"),
+       lty = c(1,2,2), lwd = c(1,2,2),
+       col = c("black","tomato3","darkgoldenrod4"),
+       bty = "n")
+
+newFallow <- forecast(model4)
+newFallow
+
+newFallowF <- data.frame(newFallow)
+
+years <- c(rep(2021,4), rep(2022,12), rep(2023,8))
+month <- c(seq(9,12), seq(1,12), seq(1,8))
+newFallowF$dateF <- ymd(paste(years,"/",month,"/",1))
+
+ggplot() +
+  geom_line(data = fallow, aes(x = ymd(date), y = ET.in)) +
+  xlim(ymd(fallow$date[1]), newFallowF$dateF[24]) +
+  geom_line(data = newFallowF, aes(x = dateF, y = Point.Forecast),
+            col = "red") +
+  geom_ribbon(data = newFallowF,
+              aes(x = dateF, ymin = Lo.95, ymax = Hi.95),
+              fill = rgb(0.5,0.5,0.5,0.5)) +
+  theme_classic() +
+  labs(x = "year", y = "Evapotranspiration (in)")
